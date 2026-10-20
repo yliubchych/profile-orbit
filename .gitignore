@@ -1,0 +1,5 @@
+# Local launcher account data must never enter source control or release archives.
+launcher/profiles/
+launcher/*.backup*
+launcher/dist/
+launcher/tests/.tmp/
