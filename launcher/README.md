@@ -1,6 +1,6 @@
 # Profile Launcher — Windows beta
 
-A local utility for separate Codex desktop accounts and project shortcuts. Independent of OpenAI; requires the official desktop app installed separately. Version: 0.1.0-beta.1. No ads, analytics, account sharing, cloud sync or payments are included.
+A local utility for separate Codex desktop accounts and project shortcuts. Independent of OpenAI; requires the official desktop app installed separately. Version: 0.1.0-beta.3. No ads, analytics, account sharing, cloud sync or payments are included.
 
 ## Install and update
 
@@ -15,6 +15,7 @@ To update, exit the launcher from its tray menu and run the new package's instal
 - **Add profile** opens a name/color editor. Create as many separate accounts as needed; use **Edit profile** to rename/recolor them. Folder IDs remain unchanged, preserving account data.
 - **Launch** starts a stopped profile. **Focus** restores an existing visible/minimized window. **Reopen** asks the app to reopen a background profile without stopping its tasks. Status refreshes every three seconds. **Unknown / Unavailable** means process state could not be determined; it does not mean the account stopped.
 - **Projects...** stores local folder shortcuts under that profile. Choose **Open selected** to request a new chat in that folder, using the selected profile. Removing a shortcut never deletes its project folder. The documented workspace deep link is passed directly to the selected app/data-root pair. It does not submit a prompt, merge account histories, or change project trust settings.
+- **Plugins...** opens the official plugin directory in that profile's built-in browser. Sign in with the same ChatGPT account as the desktop profile, then install/connect a plugin through its normal flow. Windows defaults and registry settings are not changed. See [verification limits](#plugin-authorization-returns).
 - **Open all profiles** opens them in list order, 15 seconds apart. A new cold start requires 2.5 GB free RAM; existing profiles bypass that launcher-specific threshold.
 - **Fully close** forcefully stops that selected profile's process tree and interrupts its tasks. It cancels pending launches. Saved sign-in and chats stay on disk.
 - Closing or minimizing the launcher hides it to the Windows tray. Double-click the tray icon to restore it, or use the tray's profile actions. **Exit launcher** releases hotkeys and cancels pending launches; it does not close Codex profiles.
@@ -28,6 +29,14 @@ Profile labels are user-assigned names, not independently verified account ident
 Runtime data is stored in `profiles/` beside the installed scripts, including `launcher.json` metadata, a bounded redacted event log, and each account's `codex/` and `desktop/` folders. These folders can contain credentials, chats and personal files. Do not publish or copy them into a release archive.
 
 Existing PBX and Personal folders beside an older version are adopted in place on first use. New installations start with an empty profile list and need their own sign-in. Use `-DataRoot "absolute\path\to\profiles"` with `Launcher.ps1` to explicitly reuse an existing profile root; no automatic account migration or copying is performed. Separate folders are not an operating-system filesystem security boundary.
+
+## Plugin authorization returns
+
+Authorization started in the desktop app can return through Windows to the default ChatGPT window. **Plugins...** provides an alternative entry point: it sends the fixed official directory URL directly to the selected profile's built-in browser. The installed app contains an internal connector-return handler for this browser, avoiding the need for a launcher callback picker or a Windows protocol override. Normal website sign-in, human verification and provider permission approval still apply. Web and desktop sign-ins are separate; the launcher does not copy cookies or credentials to sign the browser in.
+
+An inactive source prototype remains for investigation and regression tests. It implements opaque callback dispatch, explicit target selection, temporary registration, volatile registry keys and watchdog cleanup. These tests establish preservation and delivery to synthetic processes; they do not establish automatic delivery to the correct live profile.
+
+**Verification limit:** on 2026-10-21 direct browser entry and a synthetic denied-authorization redirect reached the existing profile's built-in browser; its original process identity was preserved. GitHub subsequently became installed/enabled in the active chat, and an authenticated read-only login request succeeded. The completed authorization path was not observed, so this does not prove the new entry point caused the connection or works across profiles/providers. This remains a candidate route; the desktop app's existing external-browser flow is not verified as fixed. The browser deep link was inspected in installed build 26.1013.4894.0; future builds and provider restrictions require testing. No Windows setting, credential, or installed app code is modified by this entry point. The earlier protocol-registration experiment remains inactive and its callback/watchdog entry points are excluded from the ZIP.
 
 ## Diagnostics
 

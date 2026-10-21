@@ -98,13 +98,20 @@ function Update-LauncherCards($Form) {
                 try { $owner.Tag.Status.Text=Stop-CodexProfile $this.Tag;try{Write-LauncherEvent $owner.Tag.Root 'close' 'ok'}catch{} } catch { Show-LauncherError $owner $_ }
                 $owner.Tag.AllButton.Enabled=$true
             })
-            $projects=New-UiButton $card 'Projects...' 20 210 248 36; $projects.Tag=$p.Id
+            $projects=New-UiButton $card 'Projects...' 20 210 116 36; $projects.Tag=$p.Id
             $projects.Add_Click({
                 $owner=$this.FindForm()
                 try { $manager=New-ProjectManager $owner.Tag.Root $this.Tag;try{[void]$manager.ShowDialog($owner)}finally{$manager.Dispose()} }
                 catch { Show-LauncherError $owner $_ }
             })
-            $ctx.Cards[$p.Id]=@{Panel=$card;NameLabel=$name;StateLabel=$stateLabel;OpenButton=$open;EditButton=$edit;CloseButton=$close;ProjectsButton=$projects}
+            $plugins=New-UiButton $card 'Plugins...' 152 210 116 36; $plugins.Tag=$p.Id
+            $plugins.Add_Click({
+                $owner=$this.FindForm();$this.Enabled=$false
+                try {Invoke-LauncherPlugins $owner.Tag.Root $this.Tag;$owner.Tag.Status.Text='Plugin directory opened for this profile.'}
+                catch {Show-LauncherError $owner $_}
+                finally {$this.Enabled=$true}
+            })
+            $ctx.Cards[$p.Id]=@{Panel=$card;NameLabel=$name;StateLabel=$stateLabel;OpenButton=$open;EditButton=$edit;CloseButton=$close;ProjectsButton=$projects;PluginsButton=$plugins}
         }
     } finally { $ctx.List.ResumeLayout() }
     Update-LauncherStatus $Form

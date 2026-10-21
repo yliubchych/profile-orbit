@@ -1,4 +1,4 @@
-param([int]$Through=5)
+param([int]$Through=7)
 $ErrorActionPreference='Stop'
 $failed=@()
 foreach($suite in Get-ChildItem $PSScriptRoot -Filter 'Feature*.Tests.ps1' | Sort-Object Name) {

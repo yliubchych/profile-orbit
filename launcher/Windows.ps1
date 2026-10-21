@@ -152,6 +152,7 @@ function Wait-ProfileWindow([string]$DataPath, [string]$Name) {
 function Find-CodexApp {
     return (Get-InstalledCodexInfo).Path
 }
+. "$PSScriptRoot/CallbackRouting.ps1"
 function Get-InstalledCodexInfo {
     $packages = @(Get-AppxPackage -Name 'OpenAI.Codex' -ErrorAction SilentlyContinue | Sort-Object Version -Descending)
     foreach ($package in $packages) {
@@ -171,7 +172,7 @@ function New-ProfileStartInfo([string]$App, [string]$Data, [string]$Codex, [stri
     $start.WorkingDirectory = Split-Path -Parent $app
     $start.Arguments = '--user-data-dir="' + $data + '"'
     if($DeepLink) {
-        if($DeepLink -notmatch '^codex://threads/new\?path=[A-Za-z0-9%._~-]+$'){throw 'Invalid project activation link.'}
+        if($DeepLink -cnotmatch '^codex://threads/new\?path=[A-Za-z0-9%._~-]+$' -and $DeepLink -cne (New-LauncherPluginsLink)){$null=Assert-ConnectorCallbackLink $DeepLink}
         $start.Arguments += ' "'+$DeepLink+'"'
     }
     # Do not pass the launching agent's connection/authentication context to a new profile.
@@ -203,6 +204,16 @@ function Invoke-LauncherProject([string]$Root, [string]$Id, [string]$ProjectId) 
     }
 }
 
+function Invoke-LauncherPlugins([string]$Root,[string]$Id) {
+    $null=Get-LauncherProfile $Root $Id
+    $profileRoot=Get-CanonicalRoot $Root
+    $base=Join-Path $profileRoot $Id
+    Invoke-LauncherLock (Get-LauncherLockName $base 'profile') {
+        $null=Start-CodexProfile $Id
+        # Direct delivery keeps the browser and its cookies in the selected app instance.
+        Invoke-ProfileLaunch (Find-CodexApp) (Join-Path $base 'desktop') (Join-Path $base 'codex') (New-LauncherPluginsLink)
+    }
+}
 function Start-CodexProfile([string]$Name) {
     $null=Get-LauncherProfile $profileRoot $Name
     $lockPath=Join-Path $profileRoot $Name

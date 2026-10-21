@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-10-21 — Profile-contained plugin setup candidate
+
+- Added **Plugins...** to each profile card, opening the fixed official plugin directory directly in the selected profile's built-in browser. No Windows registration, cookie copying or new dependency is involved. Version: 0.1.0-beta.3.
+- Verified direct entry into a live profile and synthetic return delivery while retaining the same original app process. GitHub later became installed/enabled in the active profile chat, and an authenticated read-only request succeeded. The completed authorization path was not observed; repeatable installation through the new entry point remains unverified.
+- Added test-first regression coverage for fixed-URL validation, exact profile routing, rejection of arbitrary browser targets, and card action binding/layout.
+
+## 2026-10-21 — Automatic-only authorization requirement
+
+- Owner rejected manual Windows default-handler selection and required no manual user work. Disabled the experimental callback router at startup, removed its account-picker notice, and excluded callback/watchdog entry points from release packaging. Kept the inactive prototype and preservation tests for investigation.
+- A unique disposable URL scheme successfully delivered to a synthetic handler; the existing `codex` scheme did not. Removed the disposable registration. A safe automatic live authorization route has not been established; the reported issue remains unresolved.
+
+## 2026-10-20 — Browser authorization routing and Windows preservation
+
+- Added automatic temporary callback routing with an explicit account picker, unchanged authorization-state delivery, profile process identity rechecks, and conservative Windows registration cleanup. Included the callback entry point and watchdog in the release allowlist; version is 0.1.0-beta.2.
+- Added regression, subprocess, UI and disposable-registry tests, including restoration after a synthetic launcher crash. Routing/ownership keys are volatile, and custom handlers and concurrent registry edits are preserved.
+- Local Windows activation probes failed and rolled back; the original empty protocol stub was retained. No protected default-app preference was changed. Real plugin authorization remains unverified; this is not a confirmed live fix of the reported return-routing issue.
+
 ## 2026-10-20 — Five-feature Windows launcher beta
 
 - Implemented guided profile setup/editing, live state and contextual actions, profile-bound project shortcuts, allowlisted packaging/install/update/removal with diagnostics, and tray/hotkeys/single-instance behavior.

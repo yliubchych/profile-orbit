@@ -134,6 +134,10 @@ function New-ProjectDeepLink([string]$Path) {
     $resolved=Assert-ProjectFolder $Path
     return 'codex://threads/new?path='+[Uri]::EscapeDataString($resolved)
 }
+function New-LauncherPluginsLink {
+    # Fixed official directory; never accept an arbitrary browser URL or authorization data.
+    return 'codex://browser?url='+[Uri]::EscapeDataString('https://chatgpt.com/plugins')
+}
 function Get-LauncherCompatibility([string]$Version) {
     if($Version -in @('26.1007.2314.0','26.1013.4894.0')){return 'LocallyChecked'}
     return 'Unverified'
