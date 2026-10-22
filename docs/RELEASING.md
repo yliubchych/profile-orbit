@@ -17,6 +17,13 @@ The fixed source is the public repository [yliubchych/profile-orbit](https://git
 
 Source pushes or Git tags alone do not distribute updates. GitHub's automatically generated source archives are not launcher packages. Release publishing is not automated by a workflow in this repository.
 
+## Verified beta.5 deployment — 2026-10-22
+
+- Published [v0.1.0-beta.5](https://github.com/yliubchych/profile-orbit/releases/tag/v0.1.0-beta.5) from commit `f02efab`, with the prerelease flag and the allowlisted ZIP. GitHub reported the uploaded asset digest `sha256:6a63ec1db0d183d445da4284114de232e88cce041217e3e70bbd022f5ac2b9a8`.
+- The production update functions selected and downloaded the release without authentication, validated its archive/manifest, and hash-matched it against the tested local ZIP.
+- Backed up only the old managed files, then upgraded the existing desktop installation from beta.1 to beta.5. Every deployed managed file matched the downloaded package; profile metadata/folder names and existing account process identities were unchanged.
+- Startup using the existing desktop shortcut target/arguments exited the bootstrap and opened one detached launcher window. A native probe attached to the running launcher's console object and observed `GetConsoleWindow() == 0`, confirming no console window. Installed read-only diagnostics reported beta.5, two profiles and no health errors.
+
 ## Installation boundaries
 
 `Updates.ps1` restricts URLs to the fixed repository/tag/name, verifies the archive digest, rejects unexpected/duplicate ZIP entries and excessive expanded sizes, then checks every managed file against the manifest and validates the version. Adding/removing managed filenames in a future release requires an updater compatibility plan.
