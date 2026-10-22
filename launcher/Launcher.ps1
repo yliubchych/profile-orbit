@@ -1,10 +1,17 @@
 ﻿param(
     [string]$Profile='UI',
-    [string]$DataRoot=(Join-Path $PSScriptRoot 'profiles')
+    [string]$DataRoot=(Join-Path $PSScriptRoot 'profiles'),
+    [switch]$Detached
 )
 $ErrorActionPreference='Stop'
 . "$PSScriptRoot/Core.ps1"
 . "$PSScriptRoot/Windows.ps1"
+if ($Profile -eq 'UI' -and !$Detached) {
+    # Hidden windows can still keep a Windows Terminal tab alive.
+    $child=[Diagnostics.Process]::Start((New-LauncherUIStartInfo $PSCommandPath $DataRoot))
+    $child.Dispose()
+    exit 0
+}
 $profileRoot=Get-CanonicalRoot $DataRoot
 if ($Profile -eq 'Check') {
     $report=Get-LauncherDiagnostic $profileRoot

@@ -1,8 +1,14 @@
 # Profile Launcher — Windows beta
 
-A local utility for separate Codex desktop accounts and project shortcuts. Independent of OpenAI; requires the official desktop app installed separately. Version: 0.1.0-beta.3. No ads, analytics, account sharing, cloud sync or payments are included.
+A local utility for separate Codex desktop accounts and project shortcuts. Independent of OpenAI; requires the official desktop app installed separately. Version: 0.1.0-beta.5. No ads, analytics, account sharing, cloud sync or payments are included.
 
 ## Install and update
+
+From beta.4 onward, click **Updates** in the launcher or **Check for updates...** in its tray menu. It checks public GitHub releases in the background. Click **Install and restart** when a newer compatible package is available. The launcher downloads and verifies it, exits, installs with rollback protections, and reopens with the same profile data folder. Running Codex profiles stay open. Checks are user-initiated; there is no scheduled check or silent installation.
+
+Beta installs can receive newer beta or stable releases. Stable installs ignore prereleases. Drafts, older versions and incompatible/unverifiable packages are ignored. Connection/rate-limit failures allow retry without changing the installation. Only an installed copy with unchanged managed files can update itself; repository checkouts are never overwritten.
+
+Versions before beta.4 need a one-time manual upgrade using the installer below. GitHub's archive SHA-256 digest and the package's file checksums verify downloaded bytes; they are not a publisher signature or protection against a compromised repository. No GitHub token or profile upload is used. Packages/helpers remain under `%LOCALAPPDATA%\ProfileLauncherUpdates`; this cache may be deleted when no update is running. See [release preparation](../docs/RELEASING.md) in the source repository.
 
 Extract the complete release ZIP, then double-click `Install.cmd`. The per-user default is `%LOCALAPPDATA%\ProfileLauncher`; no administrator installation or dependency download is needed. Installation creates a **Profile Launcher** desktop shortcut when that name is free, or preserves an existing matching shortcut. An unrelated shortcut is never overwritten.
 

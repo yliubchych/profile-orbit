@@ -5,6 +5,20 @@
         Where-Object { $_.CommandLine -match $argument -and $_.CommandLine -notmatch '--type=' }
 }
 
+function New-LauncherUIStartInfo([string]$Script,[string]$DataRoot) {
+    $quoted=@(foreach($value in @($Script,$DataRoot)) {
+        if($value.Contains('"') -or $value -match '[\r\n]'){throw 'Invalid launcher process argument.'}
+        '"'+[regex]::Replace($value,'(\\+)$','$1$1')+'"'
+    })
+    $info=New-Object Diagnostics.ProcessStartInfo
+    $info.FileName=Join-Path $PSHOME 'powershell.exe'
+    $info.Arguments='-NoProfile -ExecutionPolicy Bypass -STA -File '+$quoted[0]+' -Detached -DataRoot '+$quoted[1]
+    $info.UseShellExecute=$false
+    $info.CreateNoWindow=$true
+    $info.WindowStyle='Hidden'
+    return $info
+}
+
 function Stop-CodexProfile([string]$Name) {
     $null=Get-LauncherProfile $profileRoot $Name
     Invoke-LauncherLock (Get-LauncherLockName (Join-Path $profileRoot $Name) 'profile') { Stop-CodexProfileCore $Name }

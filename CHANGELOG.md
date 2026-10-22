@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-10-22 — Console-free launcher startup (beta.5)
+
+- UI launches now start the persistent Windows Forms process without a console and exit the initial bootstrap, preventing a lingering PowerShell/Windows Terminal window. Custom data roots and command-line diagnostics are preserved.
+- Added a native synthetic regression for console absence, STA mode and custom data-root argument delivery.
+
+## 2026-10-21 — In-app repository updates (beta.4)
+
+- Added Updates in the main window and tray, background release checks/downloads, beta/stable selection, verified packages, and user-triggered install/restart.
+- Added a trusted helper that waits for launcher exit, preserves the selected data root and running Codex profiles, rejects edited installations/downgrades, and uses existing installer rollback.
+- Added both updater scripts to packaging and documented release preparation. Repository visibility was verified as public following owner authorization. Release publication and the owner's installed-copy upgrade remain separate steps.
+- Full outside-sandbox regression gate: 103 passed across 25 suites, including 12 updater cases. Native helper checks passed again after the trailing-backslash quoting fix.
+
 ## 2026-10-21 — Profile-contained plugin setup candidate
 
 - Added **Plugins...** to each profile card, opening the fixed official plugin directory directly in the selected profile's built-in browser. No Windows registration, cookie copying or new dependency is involved. Version: 0.1.0-beta.3.

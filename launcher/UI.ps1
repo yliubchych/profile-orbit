@@ -1,17 +1,66 @@
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
+. "$PSScriptRoot/Updates.ps1"
+$script:LauncherCodeRoot=$PSScriptRoot
 [Windows.Forms.Application]::EnableVisualStyles()
-$script:Theme = @{ Background='#101416'; Surface='#1B2226'; Text='#F3F7F8'; Muted='#9CAEB5'; Accent='#9BE4CC' }
+$script:Theme = @{ Background='#10151F'; Surface='#202C3D'; Text='#F3F7F8'; Muted='#A6B5C9'; Accent='#9BE4CC' }
+if (-not ('LauncherSurface' -as [type])) {
+Add-Type -ReferencedAssemblies System.Windows.Forms,System.Drawing -TypeDefinition @"
+using System;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Windows.Forms;
+public class LauncherSurface : Panel {
+    public LauncherSurface() { DoubleBuffered = true; }
+    public static GraphicsPath Shape(Rectangle r, int radius) {
+        GraphicsPath p = new GraphicsPath(); int d=radius*2;
+        p.AddArc(r.X,r.Y,d,d,180,90); p.AddArc(r.Right-d,r.Y,d,d,270,90);
+        p.AddArc(r.Right-d,r.Bottom-d,d,d,0,90); p.AddArc(r.X,r.Bottom-d,d,d,90,90); p.CloseFigure(); return p;
+    }
+    protected override void OnPaintBackground(PaintEventArgs e) {
+        e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+        e.Graphics.Clear(Parent == null ? BackColor : Parent.BackColor);
+        Rectangle r = new Rectangle(1,1,Width-5,Height-7);
+        using(GraphicsPath p=Shape(r,16))
+        using(GraphicsPath shadow=Shape(new Rectangle(2,5,Width-5,Height-7),16))
+        using(Brush shade=new SolidBrush(Color.FromArgb(65,0,0,0)))
+        using(Brush fill=new LinearGradientBrush(r,BackColor,Color.FromArgb(23,32,46),65f))
+        using(Pen edge=new Pen(Color.FromArgb(58,78,103))) {
+            e.Graphics.FillPath(shade,shadow); e.Graphics.FillPath(fill,p); e.Graphics.DrawPath(edge,p);
+        }
+    }
+}
+public class LauncherButton : Button {
+    bool hover;
+    public LauncherButton() { DoubleBuffered=true; }
+    protected override void OnMouseEnter(EventArgs e) { hover=true; Invalidate(); base.OnMouseEnter(e); }
+    protected override void OnMouseLeave(EventArgs e) { hover=false; Invalidate(); base.OnMouseLeave(e); }
+    protected override void OnPaint(PaintEventArgs e) {
+        e.Graphics.SmoothingMode=SmoothingMode.AntiAlias;
+        e.Graphics.Clear(Parent == null ? BackColor : Parent.BackColor);
+        Rectangle r=new Rectangle(1,1,Width-3,Height-3);
+        Color top=hover ? ControlPaint.Light(BackColor,.15f) : BackColor;
+        using(GraphicsPath p=LauncherSurface.Shape(r,9))
+        using(Brush b=new LinearGradientBrush(r,top,ControlPaint.Dark(BackColor,.13f),90f))
+        using(Pen edge=new Pen(Color.FromArgb(Enabled ? 65 : 25,166,190,210))) {
+            e.Graphics.FillPath(b,p); e.Graphics.DrawPath(edge,p);
+        }
+        TextRenderer.DrawText(e.Graphics,Text,Font,r,Enabled ? ForeColor : Color.FromArgb(116,130,149),TextFormatFlags.HorizontalCenter|TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis);
+        if(Focused && ShowFocusCues) ControlPaint.DrawFocusRectangle(e.Graphics,new Rectangle(5,5,Width-11,Height-11),ForeColor,BackColor);
+    }
+}
+"@
+}
 function New-UiLabel($Parent, [string]$Text, [int]$X, [int]$Y, [int]$Width, [int]$Height, [float]$Size=10, [string]$Color='#F3F7F8') {
     $c=New-Object Windows.Forms.Label
     $c.Text=$Text; $c.SetBounds($X,$Y,$Width,$Height)
-    $c.AutoEllipsis=$true
+    $c.AutoEllipsis=$true; $c.BackColor=[Drawing.Color]::Transparent
     $c.Font=New-Object Drawing.Font('Segoe UI',$Size)
     $c.ForeColor=[Drawing.ColorTranslator]::FromHtml($Color)
     $Parent.Controls.Add($c); return $c
 }
-function New-UiButton($Parent, [string]$Text, [int]$X, [int]$Y, [int]$Width, [int]$Height, [string]$Back='#1B2226', [string]$Fore='#F3F7F8') {
-    $c=New-Object Windows.Forms.Button
+function New-UiButton($Parent, [string]$Text, [int]$X, [int]$Y, [int]$Width, [int]$Height, [string]$Back='#2A394E', [string]$Fore='#F3F7F8') {
+    $c=New-Object LauncherButton
     $c.Text=$Text; $c.SetBounds($X,$Y,$Width,$Height)
     $c.FlatStyle='Flat'; $c.FlatAppearance.BorderSize=0
     $c.BackColor=[Drawing.ColorTranslator]::FromHtml($Back)
@@ -76,12 +125,14 @@ function Update-LauncherCards($Form) {
         $ctx.AllButton.Enabled=($profiles.Count -gt 0 -and !$ctx.LaunchTimer.Enabled)
         $ctx.AllButton.Visible=($profiles.Count -gt 0)
         foreach($p in $profiles) {
-            $card=New-Object Windows.Forms.Panel
+            $card=New-Object LauncherSurface
             $card.Size=New-Object Drawing.Size(284,268); $card.Margin=New-Object Windows.Forms.Padding(0,0,20,20)
             $card.BackColor=[Drawing.ColorTranslator]::FromHtml($script:Theme.Surface)
             $ctx.List.Controls.Add($card)
-            $name=New-UiLabel $card $p.Name 20 18 245 38 18
-            $stateLabel=New-UiLabel $card 'Checking...' 20 64 245 30 9 $script:Theme.Muted
+            $null=New-UiLabel $card 'PROFILE' 20 16 245 20 8 $p.Color
+            $name=New-UiLabel $card $p.Name 20 39 245 34 18
+            $name.Font=New-Object Drawing.Font('Segoe UI Semibold',18)
+            $stateLabel=New-UiLabel $card 'Checking...' 20 77 245 24 9 $script:Theme.Muted
             $open=New-UiButton $card ('Open '+$p.Name) 20 106 248 40 $p.Color '#101416'; $open.Tag=$p.Id
             $open.Add_Click({
                 $owner=$this.FindForm(); $this.Enabled=$false
@@ -178,6 +229,8 @@ function Update-LauncherStatus($Form) {
         $state=Get-LauncherProfileState $ctx.Root $id
         $card=$ctx.Cards[$id]
         $card.StateLabel.Text=$state.Status
+        $stateColor=switch($state.Status){'Open' {'#9BE4CC'} 'Background' {'#AFCBFF'} 'Unknown' {'#E6C38A'} default {'#A6B5C9'}}
+        $card.StateLabel.ForeColor=[Drawing.ColorTranslator]::FromHtml($stateColor)
         $card.OpenButton.Text=$state.Action+' '+$card.NameLabel.Text
         $card.OpenButton.Enabled=($state.Action -ne 'Unavailable')
         $card.CloseButton.Enabled=($state.Status -in @('Open','Background'))
@@ -191,7 +244,11 @@ function New-LauncherForm([string]$Root) {
     $f.Font=New-Object Drawing.Font('Segoe UI',10)
     $f.BackColor=[Drawing.ColorTranslator]::FromHtml($script:Theme.Background)
     $null=New-UiLabel $f 'PROFILE LAUNCHER' 32 22 420 25 9 $script:Theme.Accent
-    $null=New-UiLabel $f 'Your work. Your space.' 30 56 620 48 26
+    $updates=New-UiButton $f 'Updates' 510 18 120 32
+    $updates.Anchor='Top,Right'
+    $updates.Add_Click({Show-LauncherUpdates $this.FindForm()})
+    $heading=New-UiLabel $f 'A space for every account.' 30 56 620 48 26
+    $heading.Font=New-Object Drawing.Font('Segoe UI Semibold',26)
     $null=New-UiLabel $f 'Choose an account, or create a separate profile.' 32 113 600 25 10 $script:Theme.Muted
     $add=New-UiButton $f '+ Add profile' 32 153 174 36 $script:Theme.Accent '#101416'
     $add.Add_Click({ $owner=$this.FindForm(); try { Show-ProfileEditor $owner } catch { Show-LauncherError $owner $_ } })
@@ -221,7 +278,7 @@ function New-LauncherForm([string]$Root) {
         if($ctx.Session -and $ctx.Session.FocusEvent.WaitOne(0)){Restore-LauncherWindow $this.Tag}
         Update-LauncherStatus $this.Tag
     } catch { $this.Tag.Tag.Status.Text='Status is unavailable. Refresh after checking profile metadata.' } })
-    $f.Tag=@{Root=$Root;Cards=@{};List=$list;EmptyLabel=$empty;Status=$status;AddButton=$add;AllButton=$all;LaunchTimer=$timer;StatusTimer=$statusTimer;Pending=@()}
+    $f.Tag=@{Root=$Root;Cards=@{};List=$list;EmptyLabel=$empty;Status=$status;AddButton=$add;AllButton=$all;UpdatesButton=$updates;LaunchTimer=$timer;StatusTimer=$statusTimer;Pending=@()}
     $f.Tag.AllowExit=$false;$f.Tag.EnableHotkeys=$true;$f.Tag.HotkeyTargets=@{};$f.Tag.Session=$null
     Initialize-LauncherTray $f
     $f.Add_Shown({$this.Tag.StatusTimer.Start();$this.Tag.TrayIcon.Visible=$true;Update-LauncherHotkeys $this})
@@ -231,6 +288,100 @@ function New-LauncherForm([string]$Root) {
     $f.Add_Disposed({Dispose-LauncherDesktop $this})
     Update-LauncherCards $f
     return $f
+}
+function New-LauncherUpdateDialog($Owner) {
+    $f=New-Object Windows.Forms.Form
+    $f.Text='Profile Launcher updates';$f.ClientSize=New-Object Drawing.Size(520,290)
+    $f.StartPosition='CenterParent';$f.FormBorderStyle='FixedDialog';$f.MaximizeBox=$false;$f.MinimizeBox=$false
+    $f.Font=New-Object Drawing.Font('Segoe UI',10);$f.BackColor=[Drawing.ColorTranslator]::FromHtml($script:Theme.Background)
+    $version=([IO.File]::ReadAllText((Join-Path $script:LauncherCodeRoot 'VERSION'))).Trim()
+    $null=New-UiLabel $f 'Keep your launcher up to date.' 24 20 472 38 19
+    $null=New-UiLabel $f ("Installed version: "+$version) 24 66 472 26 10 $script:Theme.Muted
+    $message=New-UiLabel $f 'Check for a newer release on GitHub. Your profiles stay on this computer.' 24 108 472 86 11
+    $action=New-UiButton $f 'Check for updates' 24 220 290 44 $script:Theme.Accent '#101416'
+    $close=New-UiButton $f 'Close' 332 220 164 44;$close.Add_Click({$this.FindForm().Close()})
+    $timer=New-Object Windows.Forms.Timer;$timer.Interval=150;$timer.Tag=$f
+    $f.Tag=@{Owner=$Owner;Version=$version;Message=$message;Action=$action;Timer=$timer;Job=$null;Update=$null;Mode='Check';CancelRequested=$false;CodeRoot=$script:LauncherCodeRoot}
+    $action.Add_Click({Start-LauncherUpdateTask $this.FindForm()})
+    $timer.Add_Tick({Receive-LauncherUpdateTask $this.Tag})
+    $f.Add_FormClosing({
+        param($sender,$args)
+        if($sender.Tag.Job){$args.Cancel=$true;$sender.Tag.CancelRequested=$true;$sender.Hide()}
+    })
+    $f.Add_Disposed({$this.Tag.Timer.Stop();$this.Tag.Timer.Dispose()})
+    return $f
+}
+function Set-LauncherUpdateResult($Dialog,$Update) {
+    $ctx=$Dialog.Tag;$ctx.Update=$Update
+    if($Update){
+        $ctx.Message.Text='Version '+$Update.Version+" is available. Install and restart the launcher; running Codex profiles stay open."
+        $ctx.Action.Text='Install and restart';$ctx.Mode='Install'
+    }else{
+        $ctx.Message.Text='You are up to date. No newer compatible release was found.'
+        $ctx.Action.Text='Check again';$ctx.Mode='Check'
+    }
+    $ctx.Action.Enabled=$true
+}
+function Start-LauncherUpdateTask($Dialog) {
+    $ctx=$Dialog.Tag
+    if($ctx.Job){return}
+    try{
+        if($ctx.Mode -eq 'Install'){
+            . (Join-Path $ctx.CodeRoot 'Release.ps1')
+            Assert-LauncherUpdateTarget $ctx.CodeRoot
+            $ctx.Message.Text='Downloading and verifying the update...'
+        }else{$ctx.Message.Text='Checking GitHub releases...'}
+        $ctx.Action.Enabled=$false
+        $ps=[PowerShell]::Create()
+        $null=$ps.AddScript({
+            param($codeRoot,$mode,$version,$update)
+            $ErrorActionPreference='Stop'
+            . (Join-Path $codeRoot 'Core.ps1')
+            . (Join-Path $codeRoot 'Release.ps1')
+            . (Join-Path $codeRoot 'Updates.ps1')
+            if($mode -eq 'Install'){
+                Save-LauncherUpdate $update (Join-Path $env:LOCALAPPDATA 'ProfileLauncherUpdates')
+            }else{Get-LauncherUpdate $version}
+        }).AddArgument($ctx.CodeRoot).AddArgument($ctx.Mode).AddArgument($ctx.Version).AddArgument($ctx.Update)
+        $handle=$ps.BeginInvoke()
+        $ctx.Job=@{PowerShell=$ps;Handle=$handle}
+        $ctx.Timer.Start()
+    }catch{
+        if($ps){$ps.Dispose()}
+        $ctx.Message.Text=$_.Exception.Message;$ctx.Action.Enabled=$true
+    }
+}
+function Receive-LauncherUpdateTask($Dialog) {
+    $ctx=$Dialog.Tag;$job=$ctx.Job
+    if(!$job -or !$job.Handle.IsCompleted){return}
+    $ctx.Timer.Stop()
+    try{
+        $result=@($job.PowerShell.EndInvoke($job.Handle))
+        if($job.PowerShell.HadErrors){throw ([string]$job.PowerShell.Streams.Error[0])}
+        $ctx.Job=$null
+        if($ctx.CancelRequested){return}
+        if($ctx.Mode -eq 'Install'){
+            if($result.Count -ne 1){throw 'The update could not be prepared.'}
+            . (Join-Path $ctx.CodeRoot 'Release.ps1')
+            Start-LauncherUpdateInstall $result[0] $ctx.CodeRoot $ctx.Owner.Tag.Root
+            $ctx.Owner.Tag.AllowExit=$true;$ctx.Owner.Tag.Pending=@();$ctx.Owner.Tag.LaunchTimer.Stop()
+            $ctx.Owner.Close()
+            $Dialog.Close()
+        }else{
+            $update=$null;if($result.Count){$update=$result[-1]}
+            Set-LauncherUpdateResult $Dialog $update
+        }
+    }catch{
+        $ctx.Message.Text=$_.Exception.Message;$ctx.Action.Enabled=$true
+    }finally{
+        $job.PowerShell.Dispose();$ctx.Job=$null
+        if($ctx.CancelRequested){$Dialog.Close()}
+    }
+}
+function Show-LauncherUpdates($Owner) {
+    $dialog=New-LauncherUpdateDialog $Owner
+    $dialog.Add_Shown({Start-LauncherUpdateTask $this})
+    try{[void]$dialog.ShowDialog($Owner)}finally{if(!$dialog.Tag.Job){$dialog.Dispose()}}
 }
 function Restore-LauncherWindow($Form) {
     $Form.Show();$Form.WindowState='Normal';[void]$Form.Activate()
@@ -253,6 +404,8 @@ function Update-LauncherTray($Form) {
     [void]$menu.Items.Add((New-Object Windows.Forms.ToolStripSeparator))
     $keys=$menu.Items.Add('Global hotkeys');$keys.Checked=$ctx.EnableHotkeys;$keys.CheckOnClick=$true
     $keys.Add_Click({$owner=$this.Owner.Tag;$owner.Tag.EnableHotkeys=$this.Checked;Update-LauncherHotkeys $owner})
+    $updates=$menu.Items.Add('Check for updates...')
+    $updates.Add_Click({Show-LauncherUpdates $this.Owner.Tag})
     $exit=$menu.Items.Add('Exit launcher');$ctx.ExitItem=$exit
     $exit.Add_Click({$owner=$this.Owner.Tag;$owner.Tag.AllowExit=$true;$owner.Tag.Pending=@();$owner.Tag.LaunchTimer.Stop();$owner.Close()})
 }

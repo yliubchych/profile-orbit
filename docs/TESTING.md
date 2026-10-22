@@ -33,7 +33,13 @@ Additional regression coverage exercises 60-character name boundaries, whitespac
 
 ## Practical limits
 
-Latest regression verification on 2026-10-21: **91 tests passed across 22 suites** in the full outside-sandbox gate. This includes 17 browser-return and Windows-preservation tests and three plugin-entry/UI tests. The plugin buttons were rendered and visually checked, and the source-only beta.3 ZIP was built. This is behavioral regression coverage, not a measured line/branch coverage percentage.
+The beta.5 release gate on 2026-10-22 passed all 104 tests across 26 suites in one outside-sandbox run, including the console-free startup regression.
+
+The console startup regression (`Feature5.Console.Tests.ps1`) starts a synthetic child using the UI process settings and verifies no console window, STA mode, and exact custom data-root delivery including spaces and a trailing backslash. It does not launch an account or exercise the owner's installed desktop shortcut.
+
+On 2026-10-22, the full suite plus outside-sandbox reruns of `Feature5.UI.Tests.ps1` and `Feature6.Registry.Tests.ps1` passed all 104 cases across 26 suites. The initial sandbox run failed only the documented hotkey/registry restrictions; the two rerun suites passed all 16 cases. No installed-copy update was performed.
+
+Latest regression verification on 2026-10-21: **103 tests passed across 25 suites** in the full outside-sandbox gate. This includes 12 updater tests for semantic release selection, archive/hash validation, mocked download failures, profile and edited-file preservation, cancellation/retry UI, and a separate helper installing a synthetic package and restarting a mock launcher with its custom data root. The two native updater tests passed again after the trailing-backslash quoting fix. Existing browser-return, Windows-preservation, plugin, installer/rollback and UI checks also passed. This is behavioral regression coverage, not measured line/branch coverage; no live published-asset update or owner-installed-copy deployment is claimed.
 
 The real Windows association and Shell-delivery probes did not activate the temporary handler; both rolled back. A final read-only check confirmed the real `HKCU\Software\Classes\codex` retained exactly its original two string values (`URL:codex` and the empty `URL Protocol`) and no subkeys. Tests cover registry restoration, including independent watchdog cleanup after a synthetic launcher process kill; a real OS reboot was not performed. Volatile key shutdown behavior relies on Windows' registry contract. No real plugin authorization, credential transfer, or installed-launcher update was performed. See [known issues](KNOWN_ISSUES.md).
 

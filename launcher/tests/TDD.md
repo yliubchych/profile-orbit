@@ -47,3 +47,9 @@ Tests use Windows PowerShell 5.1 and built-in .NET/Windows Forms, with synthetic
 - Updated the existing desktop installation after backing up its managed files. Existing profile IDs and account process identities/counts were unchanged. Only legacy launcher forms were asked to close; no Codex account process was stopped.
 - Verified one updated launcher window and successful duplicate-process handoff. Every deployed managed file matches the tested source. Installed read-only diagnostics detected app version 26.1013.4894.0, two profiles, and no health errors.
 - The beta remains unsigned. Independent-machine and signed-in project-navigation acceptance across desktop versions remain outside the automated results above.
+
+## 8. Repository updates — 2026-10-21
+
+- Before implementation: five of six initial cases failed for missing updater functions; the archive-rejection case initially passed because the missing function threw, so it was rerun against the implementation to verify actual archive validation.
+- Final feature gate: seven core/download/archive cases, three UI cases, and two native/helper cases passed. Mocked network requests avoid external writes and real account access. A real separate helper installed a verified synthetic package and restarted a mock launcher with a custom data root containing spaces.
+- Full outside-sandbox gate: 103 passed across 25 suites. The two helper tests passed again after adding root-path argument quoting. No real Codex account process was stopped and no owner installation was updated.

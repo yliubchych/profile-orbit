@@ -1,7 +1,7 @@
 # Source-only packaging and per-user installation. Never traverse runtime profiles.
 . "$PSScriptRoot/CallbackRouting.ps1"
 function Get-LauncherReleaseFiles {
-    @('Launcher.ps1','Core.ps1','Windows.ps1','UI.ps1','CallbackRouting.ps1','Release.ps1','Start.cmd','Install.ps1','Install.cmd','Uninstall.ps1','README.md','VERSION')
+    @('Launcher.ps1','Core.ps1','Windows.ps1','UI.ps1','CallbackRouting.ps1','Release.ps1','Updates.ps1','UpdateWorker.ps1','Start.cmd','Install.ps1','Install.cmd','Uninstall.ps1','README.md','VERSION')
 }
 function Assert-ReleaseSource([string]$Source) {
     foreach($file in Get-LauncherReleaseFiles) {

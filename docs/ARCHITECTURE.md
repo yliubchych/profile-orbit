@@ -3,6 +3,7 @@
 ## Components
 
 - `launcher/Launcher.ps1`: entry point, data-root selection, read-only health mode, and single-instance UI session.
+- UI startup uses a short bootstrap that starts an STA PowerShell process with `UseShellExecute=false` and `CreateNoWindow=true`, then exits. This prevents a hidden console host from retaining a Windows Terminal tab; command-line modes keep their normal output.
 - `launcher/Core.ps1`: validated local profile/project metadata, atomic writes, named locks, bounded redacted events, diagnostic model and singleton/hotkey definitions.
 - `launcher/Windows.ps1`: installed app discovery, exact profile process matching, native visible-window enumeration/activation, sanitized process environment, profile start/stop/project dispatch and native hotkey window.
 - Per-profile **Plugins...** dispatches a fixed official-directory browser link directly to the selected app/data-root pair. The built-in browser's internal connector-return handler is the candidate alternative to Windows URL routing. Cookies and credentials are not copied, and no protocol registration runs. Real provider connection validation is still pending; see [known issues](KNOWN_ISSUES.md).
@@ -10,6 +11,7 @@
 - `launcher/UI.ps1`: Windows Forms cards, profile editor, project manager, diagnostics preview/export, live refresh, delayed launch queue, tray and hotkey event routing.
 - `launcher/Release.ps1`, `Install.ps1`, `Uninstall.ps1`, `Build.ps1`: explicit release allowlist, checksums, installation/rollback, conservative removal and owned-shortcut management.
 - `launcher/tests/`: dependency-free PowerShell tests and synthetic native/process/UI checks. These files are not distributed.
+- `launcher/Updates.ps1`, `UpdateWorker.ps1`: public GitHub release selection, background download and verification, separate trusted install helper, and restart with the same data root. See [releasing](RELEASING.md).
 
 ## Data boundaries
 
